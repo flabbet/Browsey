@@ -1,0 +1,25 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>Library</OutputType>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Browsey.Micron\Browsey.Micron.csproj" />
+      <ProjectReference Include="..\Browsey.Rnsd\Browsey.Rnsd.csproj" />
+      <ProjectReference Include="..\Drawie\src\DrawiEngine\DrawiEngine.csproj" />
+    </ItemGroup>
+    
+    <ItemGroup>
+        <Content Include="../rns-bridge/**" LinkBase="rns-bridge">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </Content>
+        <Content Include="Assets/**" LinkBase="Assets">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </Content>
+    </ItemGroup>
+
+</Project>

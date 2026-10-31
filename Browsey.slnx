@@ -1,0 +1,33 @@
+<Solution>
+  <Folder Name="/Drawie/" />
+  <Folder Name="/Drawie/src/">
+    <Project Path="Drawie/src/Drawie.Backend.Core/Drawie.Backend.Core.csproj" />
+    <Project Path="Drawie/src/Drawie.Backend.Skia/Drawie.Backend.Skia.csproj" />
+    <Project Path="Drawie/src/Drawie.Backend.Vertie/Drawie.Backend.Vertie.csproj" />
+    <Project Path="Drawie/src/Drawie.Host.Browser/Drawie.Host.Browser.csproj" />
+    <Project Path="Drawie/src/Drawie.Host.Glfw/Drawie.Host.Glfw.csproj" />
+    <Project Path="Drawie/src/Drawie.Host/Drawie.Host.csproj" />
+    <Project Path="Drawie/src/Drawie.Interop.Avalonia.Core/Drawie.Interop.Avalonia.Core.csproj" />
+    <Project Path="Drawie/src/Drawie.Interop.Avalonia.OpenGl/Drawie.Interop.Avalonia.OpenGl.csproj" />
+    <Project Path="Drawie/src/Drawie.Interop.Avalonia.Vulkan/Drawie.Interop.Avalonia.Vulkan.csproj" />
+    <Project Path="Drawie/src/Drawie.Interop.Avalonia/Drawie.Interop.Avalonia.csproj" />
+    <Project Path="Drawie/src/Drawie.JSInterop/Drawie.JSInterop.csproj" />
+    <Project Path="Drawie/src/Drawie.Layer.UI.ImGui/Drawie.Layer.UI.ImGui.csproj" />
+    <Project Path="Drawie/src/Drawie.Layer.UI.MiniUi/Drawie.Layer.UI.MiniUi.csproj" />
+    <Project Path="Drawie/src/Drawie.Numerics/Drawie.Numerics.csproj" />
+    <Project Path="Drawie/src/Drawie.RenderApi.OpenGl/Drawie.RenderApi.OpenGl.csproj" />
+    <Project Path="Drawie/src/Drawie.RenderApi.Vulkan/Drawie.RenderApi.Vulkan.csproj" />
+    <Project Path="Drawie/src/Drawie.RenderApi.Web.Common/Drawie.RenderApi.Web.Common.csproj" />
+    <Project Path="Drawie/src/Drawie.RenderApi/Drawie.RenderApi.csproj" />
+    <Project Path="Drawie/src/Drawie.Rendering/Drawie.Rendering.csproj" />
+    <Project Path="Drawie/src/Drawie.ShaderCompiler/Drawie.ShaderCompiler.csproj" />
+    <Project Path="Drawie/src/Drawie.Shaders.Common/Drawie.Shaders.Common.csproj" />
+    <Project Path="Drawie/src/DrawiEngine.Desktop/DrawiEngine.Desktop.csproj" />
+    <Project Path="Drawie/src/DrawiEngine/DrawiEngine.csproj" />
+  </Folder>
+  <Folder Name="/Drawie/src/Drawie.RenderApi.OpenGL/" />
+  <Project Path="Browsey.Desktop/Browsey.Desktop.csproj" />
+  <Project Path="Browsey.Micron/Browsey.Micron.csproj" />
+  <Project Path="Browsey.Rnsd/Browsey.Rnsd.csproj" />
+  <Project Path="Browsey/Browsey.csproj" />
+</Solution>

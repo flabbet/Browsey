@@ -1,0 +1,3 @@
+[submodule "Drawie"]
+	path = Drawie
+	url = https://github.com/PixiEditor/Drawie.git
