@@ -1,3 +1,4 @@
+using Drawie.Backend.Core.ColorsImpl;
 using Drawie.Backend.Core.Surfaces.PaintImpl;
 using Drawie.Backend.Core.Text;
 using Drawie.Numerics;
@@ -15,6 +16,7 @@ public sealed class MicronRenderer
     private readonly double _padding;
     private readonly double _lineHeight;
     private readonly double _paragraphSpacing;
+    private readonly Color backgroundColor1 = Colors.Gray;
 
     public MicronRenderer(
         Font font,
@@ -41,6 +43,8 @@ public sealed class MicronRenderer
 
         canvas.Save();
 
+        canvas.Translate((float)_padding, (float)_padding + (float)_lineHeight);
+
         try
         {
             foreach (var micronElement in document.Elements)
@@ -51,13 +55,23 @@ public sealed class MicronRenderer
                     {
                         foreach (var blockElement in block.Elements)
                         {
+                            int saved = canvas.Save();
+                            ApplyStyle(_paint, blockElement.Style, canvas);
+
+                            VecD measured = MeasureElement(blockElement);
+
+                            DrawBackgroundIfNeeded(canvas, measured, blockElement.Style);
+
                             if (blockElement is MicronInline inline)
                             {
-                                DrawText(canvas, inline.Text, x, y);
+                                DrawText(canvas, inline.Text);
                             }
+
+                            canvas.RestoreToCount(saved);
                         }
 
                         y += _lineHeight;
+                        canvas.Translate(0, (float)_lineHeight);
 
                         break;
                     }
@@ -72,15 +86,45 @@ public sealed class MicronRenderer
         canvas.Flush();
     }
 
-    private double DrawText(Canvas canvas, string text, double x, double y)
+    private void DrawBackgroundIfNeeded(Canvas canvas, VecD measured, MicronStyle style)
+    {
+        if (style.ActiveType == MicronStyleType.Section)
+        {
+            var original = _paint.Color;
+            _paint.Color = backgroundColor1;
+            canvas.DrawRect(new RectD(0, -measured.Y, measured.X, measured.Y), _paint);
+            _paint.Color = original;
+        }
+    }
+
+    private VecD MeasureElement(MicronElement blockElement)
+    {
+        if (blockElement is MicronInline inline)
+        {
+            _font.MeasureText(inline.Text, out RectD bounds, _paint);
+            return new VecD(bounds.Width, bounds.Height);
+        }
+
+        return VecD.Zero;
+    }
+
+    private void ApplyStyle(Paint paint, MicronStyle style, Canvas canvas)
+    {
+        if (style.Depth > 0)
+        {
+            canvas.Translate((float)_paragraphSpacing * style.Depth, 0);
+        }
+    }
+
+    private double DrawText(Canvas canvas, string text)
     {
         if (string.IsNullOrEmpty(text))
-            return x;
+            return 0;
 
         _font.MeasureText(text, out RectD bounds, _paint);
 
-        canvas.DrawText(text, new VecD(x, y), _font, _paint);
+        canvas.DrawText(text, VecD.Zero, _font, _paint);
 
-        return x + bounds.Width;
+        return bounds.Width;
     }
 }

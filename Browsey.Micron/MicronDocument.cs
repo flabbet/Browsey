@@ -14,7 +14,10 @@ public class MicronDocument
     }
 }
 
-public record MicronElement;
+public record MicronElement
+{
+    public MicronStyle Style { get; set; }
+}
 
 public record MicronBlock : MicronElement
 {
@@ -33,15 +36,14 @@ public record MicronInline : MicronElement
     public string Text { get; set; }
 }
 
-public record MicronElementStyle
+public struct MicronStyle
 {
-    public float XOffset { get; set; }
-    public Paintable Background { get; set; }
-    public Paintable Foreground { get; set; }
+    public MicronStyleType ActiveType { get; set; }
+    public int Depth { get; set; }
 }
 
-public record MicronSection : MicronElement
+public enum MicronStyleType
 {
-    public string? Header { get; set; }
-    public int Level { get; set; }
+    Unknown,
+    Section
 }

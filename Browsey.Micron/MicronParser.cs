@@ -1,3 +1,5 @@
+using System.Globalization;
+
 namespace Browsey.Micron;
 
 public class MicronParser
@@ -7,11 +9,15 @@ public class MicronParser
         MicronDocument document = new MicronDocument();
 
         MicronElement? activeElement = null;
+        MicronStyle activeStyle = new MicronStyle();
         MicronBlock activeBlock = new MicronBlock();
+        string blockBuffer = "";
+        var enumerator = StringInfo.GetTextElementEnumerator(source);
 
-        foreach (var c in source)
+        while(enumerator.MoveNext())
         {
-            if (c == '\n')
+            string element = enumerator.GetTextElement();
+            if (element is "\n" or "\r\n")
             {
                 if (activeElement != null)
                 {
@@ -19,44 +25,67 @@ public class MicronParser
                 }
 
                 document.AddElement(activeBlock);
+                blockBuffer = "";
                 activeBlock = new MicronBlock();
 
                 activeElement = null;
                 continue;
             }
 
-            if (activeElement == null)
+            if (ShouldUpdateStyle(blockBuffer, element))
             {
-                activeElement = TryDetectElement(c);
+                activeStyle = TryUpdateStyle(activeStyle, element);
             }
-
-            if (activeElement is MicronSection section)
+            else if (activeElement == null)
             {
-                if (c == '>')
-                {
-                    section.Level++;
-                    continue;
-                }
-
-                section.Header += c;
+                activeElement = TryDetectElement(element);
             }
 
             if (activeElement is MicronInline inline)
             {
-                inline.Text += c;
+                inline.Text += element;
             }
+
+            activeElement?.Style = activeStyle;
         }
 
         return document;
     }
 
-    private static MicronElement? TryDetectElement(char c)
+    private static bool ShouldUpdateStyle(string blockBuffer, string element)
     {
-        if (c == '>')
+        if (blockBuffer.Length == 0)
         {
-            return new MicronSection();
+            return element == ">";
         }
 
-        return null;
+        return false;
+    }
+
+    private static MicronElement? TryDetectElement(string element)
+    {
+        return new MicronInline();
+    }
+
+    private static MicronStyle TryUpdateStyle(MicronStyle style, string element)
+    {
+        MicronStyle newStyle = style;
+        if (style.ActiveType == MicronStyleType.Unknown)
+        {
+            if (element == ">")
+            {
+                newStyle.ActiveType = MicronStyleType.Section;
+                newStyle.Depth = 0;
+            }
+        }
+        else if (style.ActiveType == MicronStyleType.Section)
+        {
+            if(element == ">")
+            {
+                newStyle.Depth++;
+            }
+        }
+
+        return newStyle;
     }
 }
