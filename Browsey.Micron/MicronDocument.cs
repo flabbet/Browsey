@@ -36,6 +36,11 @@ public record MicronInline : MicronElement
     public string Text { get; set; }
 }
 
+public record MicronSeparator : MicronElement
+{
+    public string Separator { get; set; } = "-";
+}
+
 public struct MicronStyle
 {
     public MicronStyleType ActiveType { get; set; }

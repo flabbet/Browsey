@@ -28,7 +28,7 @@ public class BrowseyApp : DrawieApp
 
     protected override void OnInitialize()
     {
-        doc = MicronParser.Parse(File.ReadAllText(@"C:\Users\flubb\Git\Browsey\Browsey\micron-reference.mu"));
+        doc = MicronParser.Parse(File.ReadAllText("micron-reference.mu"));
         /*RnsdService rnsdService = new RnsdService();
         rnsdService.Start();
         rnsdService.OnPageFetched += s =>

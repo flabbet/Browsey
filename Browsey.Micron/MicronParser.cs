@@ -29,6 +29,7 @@ public class MicronParser
                 activeBlock = new MicronBlock();
 
                 activeElement = null;
+                activeStyle = activeStyle with { ActiveType = MicronStyleType.Unknown };
                 continue;
             }
 
@@ -45,8 +46,13 @@ public class MicronParser
             {
                 inline.Text += element;
             }
+            else
+            {
+                TryUpdateElement(activeElement, element, blockBuffer);
+            }
 
             activeElement?.Style = activeStyle;
+            blockBuffer += element;
         }
 
         return document;
@@ -56,7 +62,7 @@ public class MicronParser
     {
         if (blockBuffer.Length == 0)
         {
-            return element == ">";
+            return element is ">" or "<";
         }
 
         return false;
@@ -64,7 +70,23 @@ public class MicronParser
 
     private static MicronElement? TryDetectElement(string element)
     {
+        if (element == "-")
+        {
+            return new MicronSeparator();
+        }
+        
         return new MicronInline();
+    }
+
+    private static void TryUpdateElement(MicronElement? activeElement, string element, string buffer)
+    {
+        if (activeElement is MicronSeparator separator)
+        {
+            if (buffer.Length == 1)
+            {
+                separator.Separator = element;
+            }
+        }
     }
 
     private static MicronStyle TryUpdateStyle(MicronStyle style, string element)
@@ -83,6 +105,12 @@ public class MicronParser
             if(element == ">")
             {
                 newStyle.Depth++;
+            }
+
+            if (element == "<")
+            {
+                newStyle.Depth = 0;
+                newStyle.ActiveType = MicronStyleType.Unknown;
             }
         }
 

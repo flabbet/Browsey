@@ -1,4 +1,8 @@
+using Drawie.Backend.Core;
 using Drawie.Backend.Core.ColorsImpl;
+using Drawie.Backend.Core.Numerics;
+using Drawie.Backend.Core.Shaders;
+using Drawie.Backend.Core.Surfaces.ImageData;
 using Drawie.Backend.Core.Surfaces.PaintImpl;
 using Drawie.Backend.Core.Text;
 using Drawie.Numerics;
@@ -10,6 +14,7 @@ using Drawie.Backend.Core.Surfaces;
 
 public sealed class MicronRenderer
 {
+    private const double PtToPx = 1.3333f;
     private readonly Font _font;
     private readonly Paint _paint;
 
@@ -17,6 +22,7 @@ public sealed class MicronRenderer
     private readonly double _lineHeight;
     private readonly double _paragraphSpacing;
     private readonly Color backgroundColor1 = Colors.Gray;
+    private Dictionary<string, Shader> separatorShaders = new Dictionary<string, Shader>();
 
     public MicronRenderer(
         Font font,
@@ -66,6 +72,10 @@ public sealed class MicronRenderer
                             {
                                 DrawText(canvas, inline.Text);
                             }
+                            else if (blockElement is MicronSeparator separator)
+                            {
+                                DrawSeparator(canvas, separator);
+                            }
 
                             canvas.RestoreToCount(saved);
                         }
@@ -92,7 +102,7 @@ public sealed class MicronRenderer
         {
             var original = _paint.Color;
             _paint.Color = backgroundColor1;
-            canvas.DrawRect(new RectD(0, -measured.Y, measured.X, measured.Y), _paint);
+            canvas.DrawRect(new RectD(0, -measured.Y, canvas.LocalClipBounds.Width, measured.Y * PtToPx), _paint);
             _paint.Color = original;
         }
     }
@@ -126,5 +136,23 @@ public sealed class MicronRenderer
         canvas.DrawText(text, VecD.Zero, _font, _paint);
 
         return bounds.Width;
+    }
+
+    private void DrawSeparator(Canvas canvas, MicronSeparator separator)
+    {
+        if (!separatorShaders.ContainsKey(separator.Separator))
+        {
+            var measured = _font.MeasureText(separator.Separator, out RectD bounds, _paint);
+            using Texture texture =
+                new Texture(new VecI((int)double.Ceiling(measured), (int)double.Ceiling(_lineHeight)));
+            texture.DrawingSurface.Canvas.DrawText(separator.Separator, new VecD(0, _font.Size), _paint);
+            using Image snapshot = texture.DrawingSurface.Snapshot();
+            separatorShaders.Add(separator.Separator,
+                Shader.CreateBitmap(Bitmap.FromImage(snapshot), TileMode.Repeat, TileMode.Clamp, Matrix3X3.Identity));
+        }
+
+        _paint.Shader = separatorShaders[separator.Separator];
+        canvas.DrawRect(0, 0, (float)canvas.LocalClipBounds.Width, (float)_lineHeight, _paint);
+        _paint.Shader = null;
     }
 }

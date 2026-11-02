@@ -10,6 +10,7 @@
     <ItemGroup>
       <ProjectReference Include="..\Browsey\Browsey.csproj" />
       <ProjectReference Include="..\Drawie\src\DrawiEngine.Desktop\DrawiEngine.Desktop.csproj" />
+        <PackageReference Include="HarfBuzzSharp.NativeAssets.Linux" Version="14.2.1.4" />
     </ItemGroup>
 
 </Project>
