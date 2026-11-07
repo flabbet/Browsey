@@ -1,12 +1,15 @@
->Outputting Formatted Text
+`F222`Bddd
 
+`cWith micron, you can control layout and presentation
+``
+`a
+
+>Outputting Formatted Text
 -∿
 <
-
 `c`!Hello!`! This is output from `*micron`*
 Micron generates formatted text for your terminal
 `a
-
 -∿
 <
 

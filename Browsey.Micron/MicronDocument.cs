@@ -1,4 +1,6 @@
+using Drawie.Backend.Core.ColorsImpl;
 using Drawie.Backend.Core.ColorsImpl.Paintables;
+using Drawie.Backend.Core.Text;
 
 namespace Browsey.Micron;
 
@@ -45,10 +47,27 @@ public struct MicronStyle
 {
     public MicronStyleType ActiveType { get; set; }
     public int Depth { get; set; }
+    public TextAlign TextAlignment { get; set; }
+    public FontStyleWeight FontWeight { get; set; }
+    public FontStyleSlant FontSlant { get; set; }
+    public Color TextColor { get; set; }
+    public Color BackgroundColor { get; set; }
+
+    public MicronStyle()
+    {
+        ActiveType = MicronStyleType.Unknown;
+        Depth = 0;
+        TextAlignment = TextAlign.Left;
+        FontWeight = FontStyleWeight.Normal;
+        FontSlant = FontStyleSlant.Upright;
+        TextColor = Colors.White;
+        BackgroundColor = Colors.Transparent;
+    }
 }
 
 public enum MicronStyleType
 {
     Unknown,
-    Section
+    Section,
+    Formatting
 }

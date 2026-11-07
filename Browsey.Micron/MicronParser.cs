@@ -1,4 +1,6 @@
 using System.Globalization;
+using Drawie.Backend.Core.ColorsImpl;
+using Drawie.Backend.Core.Text;
 
 namespace Browsey.Micron;
 
@@ -11,10 +13,10 @@ public class MicronParser
         MicronElement? activeElement = null;
         MicronStyle activeStyle = new MicronStyle();
         MicronBlock activeBlock = new MicronBlock();
-        string blockBuffer = "";
+        string elementBuffer = "";
         var enumerator = StringInfo.GetTextElementEnumerator(source);
 
-        while(enumerator.MoveNext())
+        while (enumerator.MoveNext())
         {
             string element = enumerator.GetTextElement();
             if (element is "\n" or "\r\n")
@@ -25,7 +27,7 @@ public class MicronParser
                 }
 
                 document.AddElement(activeBlock);
-                blockBuffer = "";
+                elementBuffer = "";
                 activeBlock = new MicronBlock();
 
                 activeElement = null;
@@ -33,26 +35,41 @@ public class MicronParser
                 continue;
             }
 
-            if (ShouldUpdateStyle(blockBuffer, element))
+            bool elementBufferCleared = false;
+            bool updatedStyle = false;
+            if (ShouldUpdateStyle(elementBuffer, element))
             {
-                activeStyle = TryUpdateStyle(activeStyle, element);
+                string elemBufferBefore = elementBuffer;
+                activeStyle = TryUpdateStyle(activeStyle, element, ref elementBuffer);
+                updatedStyle = true;
+                if (elemBufferBefore != elementBuffer)
+                {
+                    elementBufferCleared = true;
+                    if(activeElement != null)
+                        activeBlock.AddElement(activeElement);
+                    activeElement = null;
+                }
             }
             else if (activeElement == null)
             {
                 activeElement = TryDetectElement(element);
             }
 
-            if (activeElement is MicronInline inline)
+            if (!updatedStyle)
             {
-                inline.Text += element;
-            }
-            else
-            {
-                TryUpdateElement(activeElement, element, blockBuffer);
+                if (activeElement is MicronInline inline)
+                {
+                    inline.Text += element;
+                }
+                else
+                {
+                    TryUpdateElement(activeElement, element, elementBuffer);
+                }
             }
 
             activeElement?.Style = activeStyle;
-            blockBuffer += element;
+            if (!elementBufferCleared)
+                elementBuffer += element;
         }
 
         return document;
@@ -62,10 +79,10 @@ public class MicronParser
     {
         if (blockBuffer.Length == 0)
         {
-            return element is ">" or "<";
+            return element is ">" or "<" or "`";
         }
 
-        return false;
+        return blockBuffer[0] == '`' || element == "`";
     }
 
     private static MicronElement? TryDetectElement(string element)
@@ -74,7 +91,7 @@ public class MicronParser
         {
             return new MicronSeparator();
         }
-        
+
         return new MicronInline();
     }
 
@@ -89,7 +106,7 @@ public class MicronParser
         }
     }
 
-    private static MicronStyle TryUpdateStyle(MicronStyle style, string element)
+    private static MicronStyle TryUpdateStyle(MicronStyle style, string element, ref string elementBuffer)
     {
         MicronStyle newStyle = style;
         if (style.ActiveType == MicronStyleType.Unknown)
@@ -99,10 +116,16 @@ public class MicronParser
                 newStyle.ActiveType = MicronStyleType.Section;
                 newStyle.Depth = 0;
             }
+
+            if (element == "`")
+            {
+                newStyle.ActiveType = MicronStyleType.Formatting;
+                elementBuffer = "`";
+            }
         }
         else if (style.ActiveType == MicronStyleType.Section)
         {
-            if(element == ">")
+            if (element == ">")
             {
                 newStyle.Depth++;
             }
@@ -110,6 +133,79 @@ public class MicronParser
             if (element == "<")
             {
                 newStyle.Depth = 0;
+                newStyle.ActiveType = MicronStyleType.Unknown;
+            }
+        }
+        else if (style.ActiveType == MicronStyleType.Formatting)
+        {
+            if (element == "c")
+            {
+                newStyle.TextAlignment = TextAlign.Center;
+                elementBuffer = "";
+                newStyle.ActiveType = MicronStyleType.Unknown;
+            }
+            else if (element == "r")
+            {
+                newStyle.TextAlignment = TextAlign.Right;
+                elementBuffer = "";
+                newStyle.ActiveType = MicronStyleType.Unknown;
+            }
+            else if (element == "a")
+            {
+                newStyle.TextAlignment = TextAlign.Left;
+                elementBuffer = "";
+                newStyle.ActiveType = MicronStyleType.Unknown;
+            }
+            else if (element == "*")
+            {
+                newStyle.FontSlant = newStyle.FontSlant == FontStyleSlant.Italic
+                    ? FontStyleSlant.Upright
+                    : FontStyleSlant.Italic;
+                elementBuffer = "";
+                newStyle.ActiveType = MicronStyleType.Unknown;
+            }
+            else if (element == "!")
+            {
+                newStyle.FontWeight = newStyle.FontWeight == FontStyleWeight.Bold
+                    ? FontStyleWeight.Normal
+                    : FontStyleWeight.Bold;
+                elementBuffer = "";
+                newStyle.ActiveType = MicronStyleType.Unknown;
+            }
+            else if (element is "F" or "B" || elementBuffer.ElementAtOrDefault(1) is 'F' or 'B')
+            {
+                if (elementBuffer.Length == 4)
+                {
+                    var color = Color.Parse($"#{elementBuffer[2]}{elementBuffer[3]}{element}");
+                    if (elementBuffer.ElementAtOrDefault(1) == 'F')
+                    {
+                        newStyle.TextColor = color;
+                    }
+                    else
+                    {
+                        newStyle.BackgroundColor = color;
+                    }
+                    elementBuffer = "";
+                    newStyle.ActiveType = MicronStyleType.Unknown;
+                }
+            }
+            else if (element is "f" or "b" or "`")
+            {
+                newStyle.ActiveType = MicronStyleType.Unknown;
+                if (element is "`" or "f")
+                {
+                    newStyle.TextColor = Colors.White;
+                }
+
+                if (element is "`" or "b")
+                {
+                    newStyle.BackgroundColor = Colors.Transparent;
+                }
+
+                elementBuffer = "";
+            }
+            else
+            {
                 newStyle.ActiveType = MicronStyleType.Unknown;
             }
         }

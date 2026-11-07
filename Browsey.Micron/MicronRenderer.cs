@@ -17,6 +17,7 @@ public sealed class MicronRenderer
     private const double PtToPx = 1.3333f;
     private readonly Font _font;
     private readonly Paint _paint;
+    private readonly Paint _richTextPaint;
 
     private readonly double _padding;
     private readonly double _lineHeight;
@@ -36,6 +37,7 @@ public sealed class MicronRenderer
         _padding = padding;
         _lineHeight = lineHeight;
         _paragraphSpacing = paragraphSpacing;
+        _richTextPaint = new Paint();
     }
 
     public void Render(TextureFramebuffer framebuffer, MicronDocument document)
@@ -59,18 +61,43 @@ public sealed class MicronRenderer
                 {
                     case MicronBlock block:
                     {
-                        foreach (var blockElement in block.Elements)
+                        RichText? lastRichText = null;
+                        for (var i = 0; i < block.Elements.Count; i++)
                         {
+                            var blockElement = block.Elements[i];
                             int saved = canvas.Save();
-                            ApplyStyle(_paint, blockElement.Style, canvas);
-
                             VecD measured = MeasureElement(blockElement);
+
+                            ApplyStyle(_paint, blockElement.Style, canvas);
 
                             DrawBackgroundIfNeeded(canvas, measured, blockElement.Style);
 
                             if (blockElement is MicronInline inline)
                             {
-                                DrawText(canvas, inline.Text);
+                                bool nextIsInline = block.Elements.Count - 1 >= i + 1 &&
+                                                    block.Elements[i + 1] is MicronInline;
+
+                                lastRichText ??= new RichText();
+                                lastRichText.AddInline(ToRichTextInline(inline, blockElement.Style));
+
+                                if (!nextIsInline)
+                                {
+                                    var style = blockElement.Style;
+                                    if (style.TextAlignment == TextAlign.Center)
+                                    {
+                                        canvas.Translate(
+                                            (float)canvas.LocalClipBounds.Width / 2 -
+                                            (float)lastRichText.MeasureBounds().Width / 2f, 0);
+                                    }
+                                    else if (style.TextAlignment == TextAlign.Right)
+                                    {
+                                        canvas.Translate(
+                                            (float)canvas.LocalClipBounds.Width -
+                                            (float)lastRichText.MeasureBounds().Width, 0);
+                                    }
+
+                                    lastRichText.Paint(canvas, VecD.Zero, _richTextPaint);
+                                }
                             }
                             else if (blockElement is MicronSeparator separator)
                             {
@@ -96,14 +123,30 @@ public sealed class MicronRenderer
         canvas.Flush();
     }
 
+    private TextInline ToRichTextInline(MicronInline inline, MicronStyle style)
+    {
+        return new TextInline(inline.Text,
+            new FontData(_font.Family)
+                { Edging = _font.Edging, Size = _font.Size, Weight = style.FontWeight, Slant = style.FontSlant })
+        {
+            Alignment = style.TextAlignment,
+            Fill = true,
+            FillPaintable = style.TextColor,
+        };
+    }
+
     private void DrawBackgroundIfNeeded(Canvas canvas, VecD measured, MicronStyle style)
     {
-        if (style.ActiveType == MicronStyleType.Section)
+        Color color = style.ActiveType == MicronStyleType.Section ? backgroundColor1 : style.BackgroundColor;
+        if (color.A > 0)
         {
+            int saved = canvas.Save();
+            canvas.Translate(-canvas.TotalMatrix.TransX + (float)_padding, 0);
             var original = _paint.Color;
-            _paint.Color = backgroundColor1;
+            _paint.Color = color;
             canvas.DrawRect(new RectD(0, -measured.Y, canvas.LocalClipBounds.Width, measured.Y * PtToPx), _paint);
             _paint.Color = original;
+            canvas.RestoreToCount(saved);
         }
     }
 
@@ -126,20 +169,9 @@ public sealed class MicronRenderer
         }
     }
 
-    private double DrawText(Canvas canvas, string text)
-    {
-        if (string.IsNullOrEmpty(text))
-            return 0;
-
-        _font.MeasureText(text, out RectD bounds, _paint);
-
-        canvas.DrawText(text, VecD.Zero, _font, _paint);
-
-        return bounds.Width;
-    }
-
     private void DrawSeparator(Canvas canvas, MicronSeparator separator)
     {
+        int saved = canvas.Save();
         if (!separatorShaders.ContainsKey(separator.Separator))
         {
             var measured = _font.MeasureText(separator.Separator, out RectD bounds, _paint);
@@ -151,8 +183,10 @@ public sealed class MicronRenderer
                 Shader.CreateBitmap(Bitmap.FromImage(snapshot), TileMode.Repeat, TileMode.Clamp, Matrix3X3.Identity));
         }
 
+        canvas.Translate(-canvas.TotalMatrix.TransX + (float)_padding, 0);
         _paint.Shader = separatorShaders[separator.Separator];
         canvas.DrawRect(0, 0, (float)canvas.LocalClipBounds.Width, (float)_lineHeight, _paint);
         _paint.Shader = null;
+        canvas.RestoreToCount(saved);
     }
 }

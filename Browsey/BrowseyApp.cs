@@ -21,7 +21,7 @@ public class BrowseyApp : DrawieApp
 
         Paint paint = new Paint();
         paint.Color = Colors.White;
-        Font robotoMono = Font.FromStream(File.OpenRead("Assets/Fonts/RobotoMonoNerdFont-Regular.ttf"));
+        Font robotoMono = Font.CreateDefault();//Font.FromFamilyName("RobotoMonoNerdFont");//FromStream(File.OpenRead("Assets/Fonts/RobotoMonoNerdFont-Regular.ttf"));
         renderer = new MicronRenderer(robotoMono, paint);
         return wind;
     }
